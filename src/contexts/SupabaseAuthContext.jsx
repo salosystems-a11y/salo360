@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
+    import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
     import { supabase } from '@/lib/customSupabaseClient';
     import { useToast } from '@/components/ui/use-toast';
 
@@ -11,6 +11,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
       const [user, setUser] = useState(null);
       const [session, setSession] = useState(null);
       const [loading, setLoading] = useState(true);
+      const [profileLoaded, setProfileLoaded] = useState(false);
 
       const fetchUserProfile = useCallback(async (authUser) => {
         if (!authUser) return null;
@@ -64,11 +65,14 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 
       const handleSession = useCallback(async (currentSession) => {
         setLoading(true);
+        setProfileLoaded(false);
         if (currentSession?.user) {
           const fullUser = await fetchUserProfile(currentSession.user);
           setUser(fullUser);
+          setProfileLoaded(true);
         } else {
           setUser(null);
+          setProfileLoaded(false);
         }
         setSession(currentSession);
         setLoading(false);
@@ -121,16 +125,14 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
             title: "Sign in Failed",
             description: error.message || "Something went wrong",
           });
-        } else if (data.session) {
-          await handleSession(data.session);
         }
 
         return { data, error };
-      }, [toast, handleSession]);
+      }, [toast]);
 
       const signOut = useCallback(async () => {
         const { error } = await supabase.auth.signOut();
-
+        
         if (error) {
           toast({
             variant: "destructive",
@@ -138,8 +140,9 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
             description: error.message || "Something went wrong",
           });
         } else {
-          setUser(null);
-          setSession(null);
+            setUser(null);
+            setSession(null);
+            setProfileLoaded(false);
         }
 
         return { error };
@@ -149,10 +152,11 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
         user,
         session,
         loading,
+        profileLoaded,
         signUp,
         signIn,
         signOut,
-      }), [user, session, loading, signUp, signIn, signOut]);
+      }), [user, session, loading, profileLoaded, signUp, signIn, signOut]);
 
       return <SupabaseAuthContext.Provider value={value}>{children}</SupabaseAuthContext.Provider>;
     };
@@ -164,3 +168,4 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
       }
       return context;
     };
+  

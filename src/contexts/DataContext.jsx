@@ -1,5 +1,5 @@
 
-    import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+    import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
     import { supabase } from '@/lib/customSupabaseClient';
     import { useAuth } from '@/contexts/SupabaseAuthContext';
 
@@ -14,21 +14,31 @@
     };
 
     export const DataProvider = ({ children }) => {
-      const { session } = useAuth();
-      const [users, setUsers] = useState([]);
-      const [evaluations, setEvaluations] = useState([]);
-      const [competencies, setCompetencies] = useState([]);
-      const [roles, setRoles] = useState([]);
-      const [projects, setProjects] = useState([]);
-      const [projectEvaluations, setProjectEvaluations] = useState([]);
-      const [departments, setDepartments] = useState([]);
-      const [positions, setPositions] = useState([]);
-      const [permissions, setPermissions] = useState([]);
+      const { session, profileLoaded } = useAuth();
+      const [data, setData] = useState({
+        users: [],
+        evaluations: [],
+        competencies: [],
+        roles: [],
+        projects: [],
+        projectEvaluations: [],
+        departments: [],
+        positions: [],
+        permissions: [],
+      });
       const [loading, setLoading] = useState(true);
-      const [hasFetched, setHasFetched] = useState(false);
+      
+      const fetchStatus = useRef({ isFetching: false, hasFetched: false });
 
       const fetchData = useCallback(async () => {
+        if (fetchStatus.current.isFetching || fetchStatus.current.hasFetched) {
+          setLoading(false);
+          return;
+        }
+
+        fetchStatus.current.isFetching = true;
         setLoading(true);
+
         try {
           const [
             { data: profilesData, error: profilesError },
@@ -52,73 +62,64 @@
             supabase.from('project_evaluations').select('*'),
           ]);
 
-          if (profilesError) throw profilesError;
-          if (rolesError) throw rolesError;
-          if (permissionsError) throw permissionsError;
-          if (departmentsError) throw departmentsError;
-          if (positionsError) throw positionsError;
-          if (competenciesError) throw competenciesError;
-          if (evaluationsError) throw evaluationsError;
-          if (projectsError) throw projectsError;
-          if (projectEvaluationsError) throw projectEvaluationsError;
+          const errors = [profilesError, rolesError, permissionsError, departmentsError, positionsError, competenciesError, evaluationsError, projectsError, projectEvaluationsError].filter(Boolean);
+          if (errors.length > 0) {
+            const errorMessages = errors.map(e => e.message).join(', ');
+            console.error('Error fetching data parts:', errorMessages);
+            throw new Error(errorMessages);
+          }
 
-          setUsers(profilesData || []);
-          setRoles(rolesData || []);
-          setPermissions(permissionsData || []);
-          setDepartments(departmentsData || []);
-          setPositions(positionsData || []);
-          setCompetencies(competenciesData || []);
-          setEvaluations(evaluationsData || []);
-          setProjects(projectsData || []);
-          setProjectEvaluations(projectEvaluationsData || []);
-          setHasFetched(true);
-
+          setData({
+            users: profilesData || [],
+            roles: rolesData || [],
+            permissions: permissionsData || [],
+            departments: departmentsData || [],
+            positions: positionsData || [],
+            competencies: competenciesData || [],
+            evaluations: evaluationsData || [],
+            projects: projectsData || [],
+            projectEvaluations: projectEvaluationsData || [],
+          });
+          
+          fetchStatus.current.hasFetched = true;
         } catch (error) {
-          console.error('Error fetching data:', error);
-          setHasFetched(false); 
+          console.error('Error fetching all data:', error);
+          fetchStatus.current.hasFetched = false; 
         } finally {
+          fetchStatus.current.isFetching = false;
           setLoading(false);
         }
       }, []);
+      
+      const clearData = useCallback(() => {
+          setData({
+            users: [], evaluations: [], competencies: [], roles: [],
+            projects: [], projectEvaluations: [], departments: [],
+            positions: [], permissions: [],
+          });
+          fetchStatus.current.hasFetched = false;
+          fetchStatus.current.isFetching = false;
+          setLoading(false);
+      }, []);
 
       useEffect(() => {
-        if (session && !hasFetched) {
-          fetchData();
+        if (session && profileLoaded) {
+            fetchData();
         } else if (!session) {
-          setUsers([]);
-          setEvaluations([]);
-          setCompetencies([]);
-          setRoles([]);
-          setProjects([]);
-          setProjectEvaluations([]);
-          setDepartments([]);
-          setPositions([]);
-          setPermissions([]);
-          setHasFetched(false);
-          setLoading(false);
+            clearData();
         }
-      }, [session, hasFetched, fetchData]);
+      }, [session, profileLoaded, fetchData, clearData]);
+      
+      const refreshData = useCallback(async () => {
+          fetchStatus.current.hasFetched = false;
+          await fetchData();
+      }, [fetchData]);
 
-      const refreshData = useCallback(() => {
-        if (session) {
-          setHasFetched(false); 
-          fetchData();
-        }
-      }, [session, fetchData]);
-
-      const value = {
-        users,
-        evaluations,
-        competencies,
-        roles,
-        projects,
-        projectEvaluations,
-        departments,
-        positions,
-        permissions,
+      const value = useMemo(() => ({
+        ...data,
         loading,
         refreshData,
-      };
+      }), [data, loading, refreshData]);
 
       return (
         <DataContext.Provider value={value}>
