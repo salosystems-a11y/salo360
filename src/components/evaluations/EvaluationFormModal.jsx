@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useMemo } from 'react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -6,9 +7,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from '@/components/ui/use-toast';
 import { useTranslation } from '@/hooks/useTranslation';
+import { supabase } from '@/lib/customSupabaseClient';
+import { useData } from '@/contexts/DataContext';
 
-const EvaluationFormModal = ({ isOpen, onClose, onSubmit, users, competencies, currentUser, roles }) => {
+const EvaluationFormModal = ({ isOpen, onClose, users, competencies, currentUser, roles }) => {
   const t = useTranslation();
+  const { refreshData } = useData();
   const [evaluationType, setEvaluationType] = useState('180');
   const [selectedRole, setSelectedRole] = useState('');
   const [initialComments, setInitialComments] = useState('');
@@ -31,7 +35,7 @@ const EvaluationFormModal = ({ isOpen, onClose, onSubmit, users, competencies, c
     return `Q${quarter} ${now.getFullYear()}`;
   };
 
-  const handleInternalSubmit = () => {
+  const handleInternalSubmit = async () => {
     if (!selectedRole) {
       toast({ title: t('error'), description: t('select_role_to_evaluate'), variant: "destructive" });
       return;
@@ -45,64 +49,74 @@ const EvaluationFormModal = ({ isOpen, onClose, onSubmit, users, competencies, c
 
     const allNewEvaluations = [];
     const period = getCurrentPeriod();
-    const createdAt = new Date().toISOString();
+    const userMap = new Map(users.map(u => [u.id, u]));
 
     usersToEvaluate.forEach(userToEvaluate => {
-      const mainEvaluationId = `eval_${Date.now()}_${userToEvaluate.id}`;
+      const mainEvaluationId = crypto.randomUUID(); // Used for grouping 360 evaluations
 
       if (evaluationType === '180') {
-        const manager = users.find(u => u.id === userToEvaluate.managerId);
+        const manager = userMap.get(userToEvaluate.manager_id);
         if (manager) {
           allNewEvaluations.push({
-            id: mainEvaluationId,
-            evaluatedId: userToEvaluate.id,
+            id: crypto.randomUUID(),
+            evaluated_id: userToEvaluate.id,
             type: '180',
             scores: {},
             comments: initialComments,
-            customFields: [],
+            custom_fields: [],
             period,
-            evaluatorId: manager.id,
+            evaluator_id: manager.id,
             status: 'pending',
-            createdAt,
-            is360Part: false,
-            mainEvaluationId: null,
-            evaluation360Type: null
+            is_360_part: false,
+            main_evaluation_id: null,
+            evaluation_360_type: 'manager' // Direct manager evaluation
           });
+        } else {
+          toast({ title: t('error'), description: t('no_manager_found_for_180', { name: userToEvaluate.name }), variant: "destructive" });
         }
       } else if (evaluationType === '360') {
-        const evaluators = new Map();
-        
+        // Collect all potential evaluators for a 360 evaluation
+        const evaluatorsFor360 = [];
+
         // Self-evaluation
-        evaluators.set(userToEvaluate.id, { id: userToEvaluate.id, type: 'self' });
+        evaluatorsFor360.push({ id: userToEvaluate.id, type: 'self' });
 
         // Manager evaluation
-        if (userToEvaluate.managerId) {
-          evaluators.set(userToEvaluate.managerId, { id: userToEvaluate.managerId, type: 'manager' });
+        const manager = userMap.get(userToEvaluate.manager_id);
+        if (manager) {
+          evaluatorsFor360.push({ id: manager.id, type: 'manager' });
         }
 
-        // Peer evaluation
-        users.filter(u => u.role === userToEvaluate.role && u.id !== userToEvaluate.id)
-             .forEach(peer => evaluators.set(peer.id, { id: peer.id, type: 'peer' }));
+        // Subordinates evaluation (if userToEvaluate is a manager)
+        const subordinates = users.filter(u => u.manager_id === userToEvaluate.id);
+        subordinates.forEach(sub => evaluatorsFor360.push({ id: sub.id, type: 'subordinate' }));
 
-        // Subordinate evaluation
-        users.filter(u => u.managerId === userToEvaluate.id)
-             .forEach(sub => evaluators.set(sub.id, { id: sub.id, type: 'subordinate' }));
+        // Peers evaluation (all other users not already included, not managers/subordinates of each other)
+        users.forEach(potentialEvaluator => {
+          if (potentialEvaluator.id !== userToEvaluate.id && // Not self
+              potentialEvaluator.id !== manager?.id && // Not manager
+              !subordinates.some(sub => sub.id === potentialEvaluator.id) && // Not subordinate
+              userToEvaluate.manager_id !== potentialEvaluator.id && // Current user is not manager of potential evaluator (covered by peer)
+              potentialEvaluator.role === selectedRole // Only peers in the same role can evaluate
+            ) {
+            evaluatorsFor360.push({ id: potentialEvaluator.id, type: 'peer' });
+          }
+        });
 
-        evaluators.forEach(evaluator => {
+        evaluatorsFor360.forEach(evaluator => {
           allNewEvaluations.push({
-            id: `eval_${Date.now()}_${userToEvaluate.id}_${evaluator.id}`,
-            evaluatedId: userToEvaluate.id,
+            id: crypto.randomUUID(),
+            evaluated_id: userToEvaluate.id,
             type: '360',
             scores: {},
             comments: initialComments,
-            customFields: [],
+            custom_fields: [],
             period,
-            evaluatorId: evaluator.id,
+            evaluator_id: evaluator.id,
             status: 'pending',
-            createdAt,
-            is360Part: true,
-            mainEvaluationId: mainEvaluationId,
-            evaluation360Type: evaluator.type
+            is_360_part: true,
+            main_evaluation_id: mainEvaluationId,
+            evaluation_360_type: evaluator.type
           });
         });
       }
@@ -113,7 +127,15 @@ const EvaluationFormModal = ({ isOpen, onClose, onSubmit, users, competencies, c
         return;
     }
 
-    onSubmit(allNewEvaluations);
+    const { error } = await supabase.from('evaluations').insert(allNewEvaluations);
+
+    if (error) {
+      toast({ title: t('error'), description: error.message, variant: 'destructive' });
+    } else {
+      toast({ title: t('success'), description: t('evaluation_started_notification') });
+      refreshData();
+      onClose();
+    }
   };
 
   const availableRoles = useMemo(() => {
@@ -123,8 +145,13 @@ const EvaluationFormModal = ({ isOpen, onClose, onSubmit, users, competencies, c
 
   const competenciesForSelectedRole = useMemo(() => {
     if (!selectedRole) return [];
-    return competencies.filter(c => c.roles?.includes(selectedRole));
-  }, [selectedRole, competencies]);
+    // Assuming roles have a 'competencies' array field containing competence IDs
+    const selectedRoleObj = roles.find(r => r.id === selectedRole);
+    if (selectedRoleObj && selectedRoleObj.competencies) {
+      return competencies.filter(c => selectedRoleObj.competencies.includes(c.id));
+    }
+    return [];
+  }, [selectedRole, competencies, roles]);
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -171,21 +198,25 @@ const EvaluationFormModal = ({ isOpen, onClose, onSubmit, users, competencies, c
             </div>
           </div>
           
+          <div className="p-3 bg-input rounded-md border border-border text-xs text-muted-foreground">
+            {evaluationType === '180' ? t('eval_type_180_desc') : t('eval_type_360_desc')}
+          </div>
+
           <div className="space-y-1.5">
             <Label>{t('competencies_to_be_evaluated')}</Label>
             <div className="space-y-2 p-3 bg-input rounded-md border border-border max-h-40 overflow-y-auto">
                 {selectedRole ? (
                   competenciesForSelectedRole.length > 0 ? (
                     competenciesForSelectedRole.map(competency => (
-                      <div key={competency.id} className="text-xs text-muted-foreground p-1.5 bg-background rounded">
+                      <div key={competency.id} className="text-sm text-foreground p-1.5 bg-background rounded">
                         {competency.name}
                       </div>
                     ))
                   ) : (
-                    <div className="text-xs text-muted-foreground p-1.5">{t('no_competencies_for_role')}</div>
+                    <div className="text-sm text-muted-foreground p-1.5">{t('no_competencies_for_role')}</div>
                   )
                 ) : (
-                  <div className="text-xs text-muted-foreground p-1.5">{t('select_role_to_see_competencies')}</div>
+                  <div className="text-sm text-muted-foreground p-1.5">{t('select_role_to_see_competencies')}</div>
                 )}
             </div>
             <p className="text-xs text-muted-foreground">{t('evaluator_will_score')}</p>

@@ -1,5 +1,5 @@
 
-    {
+{
       "login_title": "Bem-vindo de volta!",
       "login_desc": "Faça login para aceder à sua conta.",
       "email": "Email",
@@ -277,7 +277,7 @@
       "summary_360_title": "Resumo da Avaliação 360°",
       "auto_evaluation": "Autoavaliação",
       "peers_evaluation": "Avaliação de Pares",
-      "subordinates_evaluation": "Avaliação da Equipa",
+      "subordinates_evaluation": "Avaliação de Subordinados",
       "leader_evaluation": "Avaliação do Líder",
       "temp_short": "Temp.",
       "project_closed": "Projeto Fechado",
@@ -369,7 +369,6 @@
       "create": "Criar",
       "manage_roles": "Gerir Cargos",
       "manage_roles_desc": "Crie, edite e defina permissões para cargos.",
-      "edit_role": "Editar Cargo",
       "permission_name": "Nome da Permissão",
       "permission_updated": "Permissão Atualizada",
       "permission_updated_desc": "A permissão foi atualizada com sucesso.",
@@ -441,6 +440,7 @@
       "no_collaborators_found": "Nenhum colaborador encontrado com os critérios de pesquisa.",
       "invalid_expiration_title": "Duração Inválida",
       "invalid_expiration_desc": "Por favor, insira um valor numérico positivo para a duração.",
+      "temp_user_created_title": "Colaborador Temporário Criado!",
       "temp_user_created_desc": "O utilizador {name} foi criado com uma sessão válida por {value} {unit}.",
       "session_duration": "Duração da Sessão",
       "minutes": "Minutos",
@@ -502,8 +502,10 @@
       "new_competence_evaluation_desc": "Inicie uma nova avaliação para um colaborador. O avaliador irá preencher os detalhes.",
       "select_a_collaborator": "Selecione um colaborador",
       "no_users_in_team": "Não há colaboradores na sua equipa.",
-      "eval_type_180": "Avaliação 180° (Gestor avalia colaborador)",
-      "eval_type_360": "Avaliação 360° (Múltiplas fontes)",
+      "eval_type_180": "Avaliação 180° (Gestor-Colaborador)",
+      "eval_type_180_desc": "Este tipo de avaliação é preenchido pelo gestor direto do colaborador para uma análise de desempenho e feedback direto.",
+      "eval_type_360": "Avaliação 360° (Múltiplas Fontes)",
+      "eval_type_360_desc": "Esta avaliação recolhe feedback de diversas fontes (pares, subordinados, gestores e autoavaliação) para uma visão completa do desempenho.",
       "eval_type_360_soon": "Avaliação 360° (Brevemente)",
       "competencies_to_be_evaluated": "Competências a serem avaliadas",
       "evaluator_will_score": "O avaliador irá pontuar estas competências.",
@@ -530,6 +532,14 @@
       "excellent_performance": "Excelente",
       "good_performance": "Bom",
       "regular_performance": "Regular",
-      "needs_improvement_performance": "A Melhorar"
+      "needs_improvement_performance": "A Melhorar",
+      "new_competence_evaluation_desc_by_role": "Selecione um cargo para iniciar um novo ciclo de avaliação para todos os colaboradores nesse cargo.",
+      "role_to_evaluate": "Cargo a ser avaliado",
+      "select_a_role": "Selecione um cargo",
+      "no_roles_to_evaluate": "Nenhum cargo disponível para avaliação.",
+      "no_competencies_for_role": "Nenhuma competência definida para este cargo.",
+      "select_role_to_see_competencies": "Selecione um cargo para ver as competências.",
+      "no_users_in_role": "Não existem colaboradores neste cargo para avaliar.",
+      "no_evaluations_created_title": "Nenhuma Avaliação Criada",
+      "no_evaluations_created_desc": "Não foi possível criar avaliações para todos os utilizadores no cargo selecionado. Verifique a configuração dos gestores ou se há avaliadores suficientes para 360°."
     }
-  

@@ -1,3 +1,4 @@
+
 {
   "dashboard": "Dashboard",
   "competence_evaluations": "Competence Evaluations",
@@ -255,7 +256,9 @@
   "evaluation_of_by": "Evaluation of {evaluated} by {evaluator}",
   "type": "Type",
   "eval_type_180": "180° (Leader-Collaborator)",
+  "eval_type_180_desc": "This evaluation type is completed by the direct manager of the collaborator for a direct performance analysis and feedback.",
   "eval_type_360": "360° (Multi-perspective)",
+  "eval_type_360_desc": "This evaluation gathers feedback from various sources (peers, subordinates, managers, and self-evaluation) for a comprehensive view of performance.",
   "status": "Status",
   "status_completed": "Completed",
   "status_pending": "Pending",
@@ -280,7 +283,6 @@
   "evaluator_will_score": "The evaluator will score these competencies.",
   "custom_fields_optional": "Custom Fields (Optional)",
   "new_field_name": "New field name",
-  "add": "Add",
   "evaluator_will_fill": "The evaluator will fill this field.",
   "initial_comments_optional": "Initial Comments (Optional)",
   "initial_comments_placeholder": "Add observations or instructions for the evaluator, if necessary.",
@@ -388,5 +390,8 @@
   "subordinate": "Subordinates",
   "manager_eval": "Manager",
   "report_header_for": "Report for {target}",
-  "team_evaluation": "Team Evaluation"
+  "team_evaluation": "Team Evaluation",
+  "no_manager_found_for_180": "No manager found for {name} to initiate a 180° evaluation.",
+  "no_evaluations_created_title": "No Evaluations Created",
+  "no_evaluations_created_desc": "No evaluations could be created for the selected role. Please check manager configurations or ensure enough evaluators for 360°."
 }

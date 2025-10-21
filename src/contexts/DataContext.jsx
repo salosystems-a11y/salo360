@@ -99,14 +99,16 @@
           });
           fetchStatus.current.hasFetched = false;
           fetchStatus.current.isFetching = false;
-          setLoading(false);
+          setLoading(true);
       }, []);
 
       useEffect(() => {
-        if (session && profileLoaded) {
+        if (session && profileLoaded && !fetchStatus.current.hasFetched) {
             fetchData();
         } else if (!session) {
             clearData();
+        } else if (fetchStatus.current.hasFetched) {
+            setLoading(false);
         }
       }, [session, profileLoaded, fetchData, clearData]);
       
