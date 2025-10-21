@@ -1,0 +1,105 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 220 10% 95%; /* Light gray */
+  --foreground: 220 10% 10%; /* Darker gray for main text - Increased contrast */
+  --card: 220 10% 100%; /* White */
+  --card-foreground: 220 10% 10%; /* Darker gray for card text - Increased contrast */
+  --popover: 220 10% 100%;
+  --popover-foreground: 220 10% 10%; /* Darker gray for popover text - Increased contrast */
+  --primary: 220 60% 50%; /* Professional Blue */
+  --primary-foreground: 210 40% 98%; /* White for primary button text */
+  --secondary: 220 10% 60%; /* Medium gray */
+  --secondary-foreground: 220 10% 10%; /* Darker gray for secondary button text */
+  --muted: 220 10% 85%; /* Light-medium gray */
+  --muted-foreground: 220 10% 35%; /* Darker muted text - Increased contrast */
+  --accent: 200 70% 60%; /* Lighter accent blue */
+  --accent-foreground: 220 10% 10%; /* Darker accent text - Increased contrast */
+  --destructive: 0 70% 50%; /* Standard red */
+  --destructive-foreground: 210 40% 98%;
+  --border: 220 10% 80%; /* Light gray border */
+  --input: 220 10% 90%; /* Very light gray for input background */
+  --ring: 220 60% 60%; /* Blue for focus rings */
+  --radius: 0.5rem;
+}
+
+.dark {
+  --background: 220 15% 10%; /* Darker gray */
+  --foreground: 210 20% 95%; /* Lighter gray for main text in dark mode - Increased contrast */
+  --card: 220 15% 15%; /* Darker card */
+  --card-foreground: 210 20% 95%; /* Lighter gray for card text in dark mode */
+  --popover: 220 15% 15%;
+  --popover-foreground: 210 20% 95%; /* Lighter gray for popover text in dark mode */
+  --primary: 220 60% 60%; /* Lighter blue for dark mode */
+  --primary-foreground: 220 10% 5%; /* Darker text for primary button in dark mode */
+  --secondary: 220 10% 30%;
+  --secondary-foreground: 210 20% 95%; /* Lighter text for secondary button in dark mode */
+  --muted: 220 10% 25%;
+  --muted-foreground: 210 20% 70%; /* Lighter muted text in dark mode - Increased contrast */
+  --accent: 200 70% 70%;
+  --accent-foreground: 210 20% 95%; /* Lighter accent text in dark mode */
+  --destructive: 0 60% 55%;
+  --destructive-foreground: 210 20% 95%;
+  --border: 220 10% 25%;
+  --input: 220 10% 20%;
+  --ring: 220 60% 70%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: 'Inter', sans-serif; /* More professional font */
+  font-feature-settings: "rlig" 1, "calt" 1;
+  min-height: 100vh;
+}
+
+.glass-effect {
+  background: hsl(var(--card) / 0.8); 
+  backdrop-filter: blur(8px); 
+  border: 1px solid hsl(var(--border));
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.05), 0 2px 4px -2px rgb(0 0 0 / 0.05); 
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--accent)) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.card-hover {
+  transition: all 0.2s ease-in-out;
+}
+
+.card-hover:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 10px 20px hsl(var(--primary) / 0.1);
+}
+
+.sidebar-gradient {
+  background: hsl(var(--card));
+  border-right: 1px solid hsl(var(--border));
+}
+
+input, select, textarea {
+  background-color: hsl(var(--input));
+  color: hsl(var(--foreground));
+  border-color: hsl(var(--border));
+}
+input::placeholder, textarea::placeholder {
+  color: hsl(var(--muted-foreground));
+}
+select option {
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+}
+
+.hide-for-pdf {
+  display: none !important;
+}
